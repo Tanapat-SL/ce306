@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>โปรแกรมแปลงสกุลเงิน</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+
+            font-family:
+                Arial,
+                "Tahoma",
+                sans-serif;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #667eea,
+                    #764ba2
+                );
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+
+            background: white;
+
+            border-radius: 22px;
+
+            padding: 30px;
+
+            box-shadow:
+                0 15px 40px
+                rgba(0, 0, 0, 0.20);
+        }
+
+        h1 {
+            text-align: center;
+
+            margin: 0 0 8px;
+
+            color: #222;
+
+            font-size: 30px;
+        }
+
+        .subtitle {
+            text-align: center;
+
+            color: #777;
+
+            margin-bottom: 28px;
+        }
+
+        label {
+            display: block;
+
+            font-weight: bold;
+
+            margin-bottom: 8px;
+
+            color: #333;
+        }
+
+        .currency-box {
+            margin-bottom: 20px;
+        }
+
+        .input-row {
+            display: flex;
+
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+
+            min-width: 0;
+
+            height: 52px;
+
+            padding: 0 15px;
+
+            border:
+                2px solid #ddd;
+
+            border-radius: 10px;
+
+            font-size: 18px;
+
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #627eea;
+        }
+
+        select {
+            width: 130px;
+
+            height: 52px;
+
+            border:
+                2px solid #ddd;
+
+            border-radius: 10px;
+
+            padding: 0 8px;
+
+            background: white;
+
+            font-size: 15px;
+
+            cursor: pointer;
+
+            outline: none;
+        }
+
+        select:focus {
+            border-color: #627eea;
+        }
+
+        .swap-area {
+            display: flex;
+
+            justify-content: center;
+
+            margin: 4px 0 20px;
+        }
+
+        #swap-btn {
+            width: 52px;
+            height: 52px;
+
+            border: none;
+
+            border-radius: 50%;
+
+            background: #627eea;
+
+            color: white;
+
+            font-size: 25px;
+
+            cursor: pointer;
+
+            transition: 0.3s;
+        }
+
+        #swap-btn:hover {
+            background: #5069dc;
+
+            transform: rotate(180deg);
+        }
+
+        .rate {
+            background: #f1f3ff;
+
+            color: #555;
+
+            padding: 15px;
+
+            border-radius: 10px;
+
+            text-align: center;
+
+            margin: 20px 0;
+
+            min-height: 50px;
+        }
+
+        .rate.success {
+            color: #222;
+
+            font-weight: bold;
+        }
+
+        .rate.error {
+            background: #fff0f0;
+
+            color: #d62828;
+        }
+
+        .buttons {
+            display: flex;
+
+            gap: 10px;
+
+            margin-bottom: 25px;
+        }
+
+        .buttons button {
+            flex: 1;
+
+            height: 48px;
+
+            border: none;
+
+            border-radius: 10px;
+
+            color: white;
+
+            font-size: 16px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        #clear-btn {
+            background: #ef3340;
+        }
+
+        #clear-history-btn {
+            background: #6b7280;
+        }
+
+        .buttons button:hover {
+            opacity: 0.85;
+        }
+
+        .history {
+            border-top:
+                1px solid #ddd;
+
+            padding-top: 20px;
+        }
+
+        .history-title {
+            font-size: 20px;
+
+            font-weight: bold;
+
+            color: #333;
+
+            margin-bottom: 15px;
+        }
+
+        .history-list {
+            list-style: none;
+
+            margin: 0;
+
+            padding: 0;
+        }
+
+        .history-item {
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            gap: 10px;
+
+            background: #f8f9fa;
+
+            padding: 12px;
+
+            margin-bottom: 8px;
+
+            border-radius: 8px;
+        }
+
+        .history-value {
+            color: #333;
+
+            font-weight: 500;
+        }
+
+        .history-time {
+            color: #888;
+
+            font-size: 12px;
+
+            white-space: nowrap;
+        }
+
+        .empty-history {
+            text-align: center;
+
+            color: #999;
+
+            padding: 15px;
+        }
+
+        .last-update {
+            text-align: center;
+
+            color: #777;
+
+            font-size: 13px;
+
+            margin-top: 20px;
+        }
+
+        @media (max-width: 500px) {
+
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 25px;
+            }
+
+            .input-row {
+                flex-direction: column;
+            }
+
+            select {
+                width: 100%;
+            }
+
+            .history-item {
+                flex-direction: column;
+
+                align-items: flex-start;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>💱 โปรแกรมแปลงสกุลเงิน</h1>
+
+    <div class="subtitle">
+        แปลงค่าเงินได้สองทิศทาง พร้อมบันทึกประวัติ
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- จำนวนเงินต้นทาง -->
+    <!-- ========================= -->
+
+    <div class="currency-box">
+
+        <label for="amount-one">
+            จำนวนเงินต้นทาง
+        </label>
+
+        <div class="input-row">
+
+            <input
+                type="number"
+                id="amount-one"
+                placeholder="กรอกจำนวนเงิน"
+                min="0"
+                step="any"
+            >
+
+            <select id="currency-one">
+
+                <option value="USD">
+                    USD - ดอลลาร์
+                </option>
+
+                <option value="THB">
+                    THB - บาทไทย
+                </option>
+
+                <option value="EUR">
+                    EUR - ยูโร
+                </option>
+
+                <option value="GBP">
+                    GBP - ปอนด์
+                </option>
+
+                <option value="JPY">
+                    JPY - เยน
+                </option>
+
+                <option value="CNY">
+                    CNY - หยวน
+                </option>
+
+                <option value="KRW">
+                    KRW - วอน
+                </option>
+
+                <option value="SGD">
+                    SGD - สิงคโปร์
+                </option>
+
+            </select>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- ปุ่มสลับ -->
+    <!-- ========================= -->
+
+    <div class="swap-area">
+
+        <button
+            id="swap-btn"
+            title="สลับสกุลเงิน"
+        >
+            ⇅
+        </button>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- จำนวนเงินปลายทาง -->
+    <!-- ========================= -->
+
+    <div class="currency-box">
+
+        <label for="amount-two">
+            จำนวนเงินปลายทาง
+        </label>
+
+        <div class="input-row">
+
+            <input
+                type="number"
+                id="amount-two"
+                placeholder="กรอกจำนวนเงิน"
+                min="0"
+                step="any"
+            >
+
+            <select id="currency-two">
+
+                <option value="THB">
+                    THB - บาทไทย
+                </option>
+
+                <option value="USD">
+                    USD - ดอลลาร์
+                </option>
+
+                <option value="EUR">
+                    EUR - ยูโร
+                </option>
+
+                <option value="GBP">
+                    GBP - ปอนด์
+                </option>
+
+                <option value="JPY">
+                    JPY - เยน
+                </option>
+
+                <option value="CNY">
+                    CNY - หยวน
+                </option>
+
+                <option value="KRW">
+                    KRW - วอน
+                </option>
+
+                <option value="SGD">
+                    SGD - สิงคโปร์
+                </option>
+
+            </select>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- อัตราแลกเปลี่ยน -->
+    <!-- ========================= -->
+
+    <div
+        id="rate"
+        class="rate"
+    >
+        กำลังเชื่อมต่อข้อมูลอัตราแลกเปลี่ยน...
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- ปุ่ม -->
+    <!-- ========================= -->
+
+    <div class="buttons">
+
+        <button id="clear-btn">
+            🗑️ ล้างข้อมูล
+        </button>
+
+        <button id="clear-history-btn">
+            🧹 ล้างประวัติ
+        </button>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- ประวัติ -->
+    <!-- ========================= -->
+
+    <div class="history">
+
+        <div class="history-title">
+            📋 ประวัติการแปลงเงิน
+        </div>
+
+        <ul
+            id="history-list"
+            class="history-list"
+        ></ul>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- เวลาอัปเดต -->
+    <!-- ========================= -->
+
+    <div
+        id="last-update"
+        class="last-update"
+    >
+        กำลังโหลดข้อมูล...
+    </div>
+
+</div>
+
+
+<script>
+
+    // =====================================================
+    // DOM
+    // =====================================================
+
+    const amountOne =
+        document.getElementById("amount-one");
+
+    const amountTwo =
+        document.getElementById("amount-two");
+
+    const currencyOne =
+        document.getElementById("currency-one");
+
+    const currencyTwo =
+        document.getElementById("currency-two");
+
+    const rateBox =
+        document.getElementById("rate");
+
+    const lastUpdate =
+        document.getElementById("last-update");
+
+    const historyList =
+        document.getElementById("history-list");
+
+    const swapButton =
+        document.getElementById("swap-btn");
+
+    const clearButton =
+        document.getElementById("clear-btn");
+
+    const clearHistoryButton =
+        document.getElementById("clear-history-btn");
+
+
+    // =====================================================
+    // ตัวแปรระบบ
+    // =====================================================
+
+    let currentRate = null;
+
+    let currentRateDate = null;
+
+    let lastCalculatedValue = null;
+
+    let history = JSON.parse(
+        localStorage.getItem(
+            "currencyHistory"
+        )
+    ) || [];
+
+
+    // =====================================================
+    // ดึงอัตราแลกเปลี่ยน
+    //
+    // ใช้ endpoint คู่เงินโดยตรง
+    // =====================================================
+
+    async function loadRate() {
+
+        const from =
+            currencyOne.value;
+
+        const to =
+            currencyTwo.value;
+
+
+        // กรณีสกุลเงินเหมือนกัน
+
+        if (from === to) {
+
+            currentRate = 1;
+
+            currentRateDate =
+                new Date()
+                    .toISOString()
+                    .split("T")[0];
+
+            rateBox.className =
+                "rate success";
+
+            rateBox.textContent =
+                `1 ${from} = 1.0000 ${to}`;
+
+            lastUpdate.textContent =
+                "อัตราแลกเปลี่ยน: สกุลเงินเดียวกัน";
+
+            calculateFromOne();
+
+            return;
+        }
+
+
+        rateBox.className =
+            "rate";
+
+        rateBox.textContent =
+            `กำลังโหลด ${from} → ${to}...`;
+
+
+        try {
+
+            /*
+             * เรียก API คู่เงินโดยตรง
+             *
+             * เช่น
+             * /v2/rate/USD/THB
+             */
+
+            const url =
+                `https://api.frankfurter.dev/v2/rate/${from}/${to}`;
+
+
+            const response =
+                await fetch(
+                    url,
+                    {
+                        cache: "no-store"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    `HTTP ${response.status}`
+                );
+
+            }
+
+
+            const data =
+                await response.json();
+
+
+            if (
+                typeof data.rate !== "number"
+            ) {
+
+                throw new Error(
+                    "ไม่พบค่า rate"
+                );
+
+            }
+
+
+            currentRate =
+                data.rate;
+
+            currentRateDate =
+                data.date;
+
+
+            rateBox.className =
+                "rate success";
+
+            rateBox.textContent =
+                `1 ${from} = ${currentRate.toFixed(4)} ${to}`;
+
+
+            lastUpdate.textContent =
+                `อัปเดตข้อมูลล่าสุด: ${formatApiDate(currentRateDate)}`;
+
+
+            calculateFromOne();
+
+
+        } catch (error) {
+
+            console.error(
+                "API ERROR:",
+                error
+            );
+
+
+            currentRate = null;
+
+
+            rateBox.className =
+                "rate error";
+
+            rateBox.textContent =
+                "❌ ไม่สามารถโหลดอัตราแลกเปลี่ยนได้";
+
+
+            lastUpdate.textContent =
+                "กรุณาตรวจสอบอินเทอร์เน็ต หรือเปิดไฟล์ผ่านเว็บเซิร์ฟเวอร์";
+
+
+            amountTwo.value = "";
+
+        }
+
+    }
+
+
+    // =====================================================
+    // แปลงวันที่ API
+    // =====================================================
+
+    function formatApiDate(dateString) {
+
+        if (!dateString) {
+
+            return "-";
+
+        }
+
+
+        const parts =
+            dateString.split("-");
+
+
+        if (parts.length !== 3) {
+
+            return dateString;
+
+        }
+
+
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+
+    }
+
+
+    // =====================================================
+    // คำนวณจากช่องแรก
+    // =====================================================
+
+    function calculateFromOne() {
+
+        if (currentRate === null) {
+
+            return;
+
+        }
+
+
+        const amount =
+            parseFloat(amountOne.value);
+
+
+        if (
+            amountOne.value === "" ||
+            isNaN(amount)
+        ) {
+
+            amountTwo.value = "";
+
+            lastCalculatedValue = null;
+
+            return;
+
+        }
+
+
+        const result =
+            amount * currentRate;
+
+
+        amountTwo.value =
+            result.toFixed(2);
+
+
+        lastCalculatedValue = {
+
+            amountOne: amount,
+
+            amountTwo: result,
+
+            currencyOne:
+                currencyOne.value,
+
+            currencyTwo:
+                currencyTwo.value
+
+        };
+
+    }
+
+
+    // =====================================================
+    // คำนวณย้อนกลับจากช่องสอง
+    // =====================================================
+
+    function calculateFromTwo() {
+
+        if (currentRate === null) {
+
+            return;
+
+        }
+
+
+        const amount =
+            parseFloat(amountTwo.value);
+
+
+        if (
+            amountTwo.value === "" ||
+            isNaN(amount)
+        ) {
+
+            amountOne.value = "";
+
+            lastCalculatedValue = null;
+
+            return;
+
+        }
+
+
+        const result =
+            amount / currentRate;
+
+
+        amountOne.value =
+            result.toFixed(2);
+
+
+        lastCalculatedValue = {
+
+            amountOne: result,
+
+            amountTwo: amount,
+
+            currencyOne:
+                currencyOne.value,
+
+            currencyTwo:
+                currencyTwo.value
+
+        };
+
+    }
+
+
+    // =====================================================
+    // บันทึกประวัติ
+    // =====================================================
+
+    function saveHistory() {
+
+        if (!lastCalculatedValue) {
+
+            return;
+
+        }
+
+
+        const item =
+            lastCalculatedValue;
+
+
+        /*
+         * ป้องกันการบันทึกซ้ำ
+         */
+
+        const newest =
+            history[0];
+
+
+        if (
+            newest &&
+            newest.amountOne === item.amountOne &&
+            newest.amountTwo === item.amountTwo &&
+            newest.currencyOne === item.currencyOne &&
+            newest.currencyTwo === item.currencyTwo
+        ) {
+
+            return;
+
+        }
+
+
+        history.unshift({
+
+            amountOne:
+                Number(
+                    item.amountOne.toFixed(2)
+                ),
+
+            amountTwo:
+                Number(
+                    item.amountTwo.toFixed(2)
+                ),
+
+            currencyOne:
+                item.currencyOne,
+
+            currencyTwo:
+                item.currencyTwo,
+
+            time:
+                new Date().toLocaleString(
+                    "th-TH"
+                )
+
+        });
+
+
+        /*
+         * เก็บ 10 รายการล่าสุด
+         */
+
+        history =
+            history.slice(0, 10);
+
+
+        localStorage.setItem(
+            "currencyHistory",
+            JSON.stringify(history)
+        );
+
+
+        displayHistory();
+
+    }
+
+
+    // =====================================================
+    // แสดงประวัติ
+    // =====================================================
+
+    function displayHistory() {
+
+        historyList.innerHTML = "";
+
+
+        if (history.length === 0) {
+
+            historyList.innerHTML = `
+                <li class="empty-history">
+                    ยังไม่มีประวัติการแปลงเงิน
+                </li>
+            `;
+
+            return;
+
+        }
+
+
+        history.forEach(
+            function(item) {
+
+                const li =
+                    document.createElement("li");
+
+                li.className =
+                    "history-item";
+
+
+                const value =
+                    document.createElement("div");
+
+                value.className =
+                    "history-value";
+
+
+                value.textContent =
+                    `${formatNumber(item.amountOne)}
+                    ${item.currencyOne}
+                    → 
+                    ${formatNumber(item.amountTwo)}
+                    ${item.currencyTwo}`;
+
+
+                const time =
+                    document.createElement("div");
+
+                time.className =
+                    "history-time";
+
+
+                time.textContent =
+                    item.time;
+
+
+                li.appendChild(value);
+
+                li.appendChild(time);
+
+                historyList.appendChild(li);
+
+            }
+        );
+
+    }
+
+
+    // =====================================================
+    // ตัวเลข
+    // =====================================================
+
+    function formatNumber(number) {
+
+        return Number(number)
+            .toLocaleString(
+                "th-TH",
+                {
+                    minimumFractionDigits: 2,
+
+                    maximumFractionDigits: 2
+                }
+            );
+
+    }
+
+
+    // =====================================================
+    // amount-one
+    // =====================================================
+
+    amountOne.addEventListener(
+        "input",
+        function() {
+
+            calculateFromOne();
+
+        }
+    );
+
+
+    // =====================================================
+    // amount-two
+    // =====================================================
+
+    amountTwo.addEventListener(
+        "input",
+        function() {
+
+            calculateFromTwo();
+
+        }
+    );
+
+
+    // =====================================================
+    // เปลี่ยนสกุลเงินต้นทาง
+    // =====================================================
+
+    currencyOne.addEventListener(
+        "change",
+        function() {
+
+            lastCalculatedValue = null;
+
+            loadRate();
+
+        }
+    );
+
+
+    // =====================================================
+    // เปลี่ยนสกุลเงินปลายทาง
+    // =====================================================
+
+    currencyTwo.addEventListener(
+        "change",
+        function() {
+
+            lastCalculatedValue = null;
+
+            loadRate();
+
+        }
+    );
+
+
+    // =====================================================
+    // บันทึกเมื่อกด Enter
+    // =====================================================
+
+    amountOne.addEventListener(
+        "keydown",
+        function(event) {
+
+            if (event.key === "Enter") {
+
+                saveHistory();
+
+            }
+
+        }
+    );
+
+
+    amountTwo.addEventListener(
+        "keydown",
+        function(event) {
+
+            if (event.key === "Enter") {
+
+                saveHistory();
+
+            }
+
+        }
+    );
+
+
+    // =====================================================
+    // บันทึกเมื่อออกจากช่อง
+    // =====================================================
+
+    amountOne.addEventListener(
+        "blur",
+        function() {
+
+            saveHistory();
+
+        }
+    );
+
+
+    amountTwo.addEventListener(
+        "blur",
+        function() {
+
+            saveHistory();
+
+        }
+    );
+
+
+    // =====================================================
+    // ปุ่มสลับ
+    // =====================================================
+
+    swapButton.addEventListener(
+        "click",
+        function() {
+
+            const oldCurrency =
+                currencyOne.value;
+
+
+            const oldAmount =
+                amountOne.value;
+
+
+            currencyOne.value =
+                currencyTwo.value;
+
+
+            currencyTwo.value =
+                oldCurrency;
+
+
+            amountOne.value =
+                amountTwo.value;
+
+
+            amountTwo.value =
+                oldAmount;
+
+
+            lastCalculatedValue = null;
+
+
+            loadRate();
+
+        }
+    );
+
+
+    // =====================================================
+    // ปุ่มล้างข้อมูล
+    // =====================================================
+
+    clearButton.addEventListener(
+        "click",
+        function() {
+
+            amountOne.value = "";
+
+            amountTwo.value = "";
+
+            lastCalculatedValue = null;
+
+
+            if (currentRate !== null) {
+
+                rateBox.className =
+                    "rate success";
+
+                rateBox.textContent =
+                    `1 ${currencyOne.value} = ` +
+                    `${currentRate.toFixed(4)} ` +
+                    `${currencyTwo.value}`;
+
+            } else {
+
+                rateBox.className =
+                    "rate";
+
+                rateBox.textContent =
+                    "กรุณารอโหลดอัตราแลกเปลี่ยน";
+
+            }
+
+        }
+    );
+
+
+    // =====================================================
+    // ล้างประวัติ
+    // =====================================================
+
+    clearHistoryButton.addEventListener(
+        "click",
+        function() {
+
+            if (history.length === 0) {
+
+                return;
+
+            }
+
+
+            if (
+                confirm(
+                    "ต้องการล้างประวัติทั้งหมดหรือไม่?"
+                )
+            ) {
+
+                history = [];
+
+
+                localStorage.removeItem(
+                    "currencyHistory"
+                );
+
+
+                displayHistory();
+
+            }
+
+        }
+    );
+
+
+    // =====================================================
+    // เริ่มโปรแกรม
+    // =====================================================
+
+    displayHistory();
+
+    loadRate();
+
+</script>
+
+</body>
+</html>
