@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>บันทึกรายการทางการเงิน</title>
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+	<main>
+		<h1>บันทึกรายการทางการเงิน</h1>
+
+		<section class="panel">
+			<h2>เพิ่มรายการธุรกรรม</h2>
+			<div class="form-grid">
+				<input type="text" id="transaction-name" placeholder="ชื่อรายการ">
+				<select id="transaction-type">
+					<option value="income">รายรับ</option>
+					<option value="expense">รายจ่าย</option>
+				</select>
+				<select id="transaction-category">
+					<option value="อาหาร">🍽️ อาหาร</option>
+					<option value="เดินทาง">🚗 เดินทาง</option>
+					<option value="ช้อปปิ้ง">🛍️ ช้อปปิ้ง</option>
+					<option value="เงินเดือน">💰 เงินเดือน</option>
+					<option value="อื่นๆ">📌 อื่นๆ</option>
+				</select>
+				<input type="number" id="transaction-amount" min="0" step="0.01" placeholder="จำนวนเงิน">
+			</div>
+			<button id="add-transaction-btn" type="button">เพิ่มรายการ</button>
+		</section>
+
+		<section class="panel">
+			<h2>รายการธุรกรรมทั้งหมด</h2>
+			<input type="search" id="search-input" placeholder="ค้นหาชื่อรายการแบบ Real-time">
+			<ul id="transaction-list" aria-live="polite"></ul>
+			<button id="clear-all-btn" type="button" class="danger-btn">ล้างข้อมูลทั้งหมด</button>
+		</section>
+
+		<section class="panel summary">
+			<h2>สรุปรายงานการเงิน</h2>
+			<p id="total-income">ยอดรายรับรวม: ฿0.00</p>
+			<p id="total-expense">ยอดรายจ่ายรวม: ฿0.00</p>
+			<p id="net-balance">ยอดเงินคงเหลือสุทธิ: ฿0.00</p>
+		</section>
+	</main>
+
+	<script src="script.js"></script>
+</body>
+</html>

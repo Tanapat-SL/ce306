@@ -1,0 +1,169 @@
+body {
+    font-family: sans-serif;
+    margin: 0;
+    padding: 20px;
+    background: #f5f7fb;
+    color: #1f2937;
+}
+
+main {
+    max-width: 780px;
+    margin: 0 auto;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.panel {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1.4fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+input,
+select,
+button {
+    font: inherit;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+}
+
+input:focus,
+select:focus {
+    outline: 2px solid #93c5fd;
+    border-color: #60a5fa;
+}
+
+button {
+    cursor: pointer;
+    background: #2563eb;
+    color: white;
+    border: none;
+    font-weight: 600;
+}
+
+button:hover {
+    opacity: 0.95;
+}
+
+#search-input {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 14px;
+}
+
+#transaction-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#transaction-list li {
+    display: grid;
+    grid-template-columns: 60px 90px 1.3fr 1.3fr 100px;
+    align-items: center;
+    gap: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 14px;
+}
+
+.transaction-id {
+    font-weight: 700;
+    color: #475569;
+}
+
+.transaction-type {
+    display: inline-block;
+    text-align: center;
+    padding: 5px 8px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.transaction-type.income {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.transaction-type.expense {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.transaction-name {
+    font-weight: 600;
+    color: #111827;
+}
+
+.transaction-category {
+    color: #374151;
+}
+
+.amount {
+    font-weight: 700;
+    text-align: right;
+}
+
+.amount.income {
+    color: #15803d;
+}
+
+.amount.expense {
+    color: #b91c1c;
+}
+
+.empty-state {
+    display: block;
+    text-align: center;
+    padding: 18px;
+    border: 1px dashed #cbd5e1;
+    background: #f8fafc;
+    border-radius: 8px;
+    color: #64748b;
+}
+
+.danger-btn {
+    display: block;
+    width: 100%;
+    margin-top: 16px;
+    background: #ef4444;
+}
+
+.summary p {
+    margin: 10px 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+@media (max-width: 640px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #transaction-list li {
+        grid-template-columns: 1fr;
+        text-align: left;
+    }
+
+    .amount {
+        text-align: left;
+    }
+}
