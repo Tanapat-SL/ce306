@@ -1,3 +1,4 @@
+/* ตั้งค่าพื้นฐานของเว็บให้ดูสะอาดและสบายตา */
 body {
     font-family: sans-serif;
     margin: 0;
@@ -6,16 +7,19 @@ body {
     color: #1f2937;
 }
 
+/* จัดให้เนื้อหาอยู่ตรงกลางและมีความกว้างพอเหมาะ */
 main {
     max-width: 780px;
     margin: 0 auto;
 }
 
+/* จัดหัวข้อหลักให้อยู่กลาง */
 h1 {
     text-align: center;
     margin-bottom: 24px;
 }
 
+/* กล่องแต่ละส่วนมีพื้นหลังขาว, มุมโค้ง, และเงาเบา */
 .panel {
     background: #ffffff;
     border-radius: 14px;
@@ -24,6 +28,7 @@ h1 {
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
 }
 
+/* จัด layout ฟอร์มให้เป็นแถว 4 คอลัมน์ */
 .form-grid {
     display: grid;
     grid-template-columns: 1.5fr 1fr 1.4fr 1fr;
@@ -31,6 +36,7 @@ h1 {
     margin-bottom: 10px;
 }
 
+/* ตั้งรูปแบบทั่วไปให้ input, select, button เหมือนกัน */
 input,
 select,
 button {
@@ -40,12 +46,14 @@ button {
     border: 1px solid #d1d5db;
 }
 
+/* เมื่อโฟกัสช่องกรอก ให้เห็นเส้นสีฟ้า */
 input:focus,
 select:focus {
     outline: 2px solid #93c5fd;
     border-color: #60a5fa;
 }
 
+/* ปุ่มหลักแบบสีน้ำเงิน */
 button {
     cursor: pointer;
     background: #2563eb;
@@ -58,12 +66,14 @@ button:hover {
     opacity: 0.95;
 }
 
+/* ช่องค้นหาทำเต็มความกว้าง */
 #search-input {
     width: 100%;
     box-sizing: border-box;
     margin-bottom: 14px;
 }
 
+/* ลิสต์รายการแสดงแนวตั้ง */
 #transaction-list {
     list-style: none;
     margin: 0;
@@ -73,6 +83,7 @@ button:hover {
     gap: 10px;
 }
 
+/* แต่ละรายการแสดงเป็นตาราง 5 คอลัมน์ */
 #transaction-list li {
     display: grid;
     grid-template-columns: 60px 90px 1.3fr 1.3fr 100px;
@@ -84,11 +95,13 @@ button:hover {
     padding: 12px 14px;
 }
 
+/* ตัวเลขลำดับ */
 .transaction-id {
     font-weight: 700;
     color: #475569;
 }
 
+/* ป้ายประเภท รายรับ/รายจ่าย */
 .transaction-type {
     display: inline-block;
     text-align: center;
@@ -108,15 +121,18 @@ button:hover {
     color: #991b1b;
 }
 
+/* ชื่อรายการ */
 .transaction-name {
     font-weight: 600;
     color: #111827;
 }
 
+/* หมวดหมู่ */
 .transaction-category {
     color: #374151;
 }
 
+/* จำนวนเงิน */
 .amount {
     font-weight: 700;
     text-align: right;
@@ -130,6 +146,7 @@ button:hover {
     color: #b91c1c;
 }
 
+/* ถ้าไม่มีรายการให้แสดงข้อความแบบสวย */
 .empty-state {
     display: block;
     text-align: center;
@@ -140,6 +157,7 @@ button:hover {
     color: #64748b;
 }
 
+/* ปุ่มล้างข้อมูลมีสีแดงเพื่อให้เห็นว่ามันเป็นการลบ */
 .danger-btn {
     display: block;
     width: 100%;
@@ -147,12 +165,14 @@ button:hover {
     background: #ef4444;
 }
 
+/* จัดรูปแบบข้อความสรุปรายงาน */
 .summary p {
     margin: 10px 0;
     font-size: 1.05rem;
     font-weight: 600;
 }
 
+/* สำหรับมือถือ ให้จัด layout ให้กว้างเต็มและคอลัมน์เรียงซ้อนกัน */
 @media (max-width: 640px) {
     .form-grid {
         grid-template-columns: 1fr;

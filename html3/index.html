@@ -10,14 +10,18 @@
 	<main>
 		<h1>บันทึกรายการทางการเงิน</h1>
 
+		<!-- ส่วนที่ 1: ฟอร์มเพิ่มรายการธุรกรรม -->
 		<section class="panel">
 			<h2>เพิ่มรายการธุรกรรม</h2>
 			<div class="form-grid">
+				<!-- ช่องกรอกชื่อรายการ -->
 				<input type="text" id="transaction-name" placeholder="ชื่อรายการ">
+				<!-- เลือกว่ารายการนี้เป็นรายรับหรือรายจ่าย -->
 				<select id="transaction-type">
 					<option value="income">รายรับ</option>
 					<option value="expense">รายจ่าย</option>
 				</select>
+				<!-- เลือกหมวดหมู่ของรายการ -->
 				<select id="transaction-category">
 					<option value="อาหาร">🍽️ อาหาร</option>
 					<option value="เดินทาง">🚗 เดินทาง</option>
@@ -25,18 +29,25 @@
 					<option value="เงินเดือน">💰 เงินเดือน</option>
 					<option value="อื่นๆ">📌 อื่นๆ</option>
 				</select>
+				<!-- ช่องกรอกจำนวนเงิน -->
 				<input type="number" id="transaction-amount" min="0" step="0.01" placeholder="จำนวนเงิน">
 			</div>
+			<!-- ปุ่มกดเพื่อลงข้อมูลใหม่ -->
 			<button id="add-transaction-btn" type="button">เพิ่มรายการ</button>
 		</section>
 
+		<!-- ส่วนที่ 2: แสดงประวัติรายการและค้นหา -->
 		<section class="panel">
 			<h2>รายการธุรกรรมทั้งหมด</h2>
+			<!-- ช่องค้นหาแบบ Real-time: พิมพ์แล้วกรองรายการทันที -->
 			<input type="search" id="search-input" placeholder="ค้นหาชื่อรายการแบบ Real-time">
+			<!-- จุดที่แสดงรายการทั้งหมดในรูปแบบลิสต์ -->
 			<ul id="transaction-list" aria-live="polite"></ul>
+			<!-- ปุ่มล้างข้อมูลทั้งหมด -->
 			<button id="clear-all-btn" type="button" class="danger-btn">ล้างข้อมูลทั้งหมด</button>
 		</section>
 
+		<!-- ส่วนที่ 3: สรุปรายงานทางการเงิน -->
 		<section class="panel summary">
 			<h2>สรุปรายงานการเงิน</h2>
 			<p id="total-income">ยอดรายรับรวม: ฿0.00</p>
@@ -45,6 +56,7 @@
 		</section>
 	</main>
 
+	<!-- โหลดไฟล์ JavaScript เพื่อให้โค้ดทำงาน -->
 	<script src="script.js"></script>
 </body>
 </html>
