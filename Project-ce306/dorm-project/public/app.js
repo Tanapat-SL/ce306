@@ -1,108 +1,50 @@
-/**
- * DormCare Application Client Logic
- * Single Page Application (SPA) with Dynamic DOM Updates & RESTful API integration
- */
-
-// Application State
 let currentUser = null;
 let currentToken = localStorage.getItem('token') || null;
-let mockAnnouncements = [
-    { id: 1, title: 'แจ้งล้างแอร์ประจำปี', content: 'ทีมช่างจะเข้าทำการล้างแอร์ในวันเสาร์นี้ เวลา 09:00 - 16:00 น.', date: '19 ต.ค. 2026' },
-    { id: 2, title: 'ขอความร่วมมือคัดแยกขยะ', content: 'โปรดทิ้งขยะในจุดที่จัดไว้ให้ ณ ชั้น 1', date: '15 ต.ค. 2026' }
-];
+let globalReports = []; 
+let mockAnnouncements = [{ id: 1, title: 'แจ้งล้างแอร์', content: 'ทีมช่างจะเข้า...', date: 'วันนี้' }];
 
-// Initialize application on DOM loaded
-document.addEventListener('DOMContentLoaded', () => {
-    checkInitialAuth();
-});
+document.addEventListener('DOMContentLoaded', checkInitialAuth);
 
-// Helper: Show Alert
+function togglePasswordVisibility() {
+    const pInput = document.getElementById('password');
+    const icon = document.getElementById('toggle-password-icon');
+    if (pInput.type === 'password') { pInput.type = 'text'; icon.classList.replace('fa-eye', 'fa-eye-slash'); }
+    else { pInput.type = 'password'; icon.classList.replace('fa-eye-slash', 'fa-eye'); }
+}
+
 function showAlert(message, type = 'success') {
-    const alertBox = document.getElementById('alert-box');
-    const alertMsg = document.getElementById('alert-msg');
-    const alertIcon = document.getElementById('alert-icon');
-
-    alertBox.className = 'mb-6 p-4 rounded-xl shadow-sm border text-sm flex items-center justify-between ';
-    
-    if (type === 'success') {
-        alertBox.classList.add('bg-emerald-50', 'border-emerald-200', 'text-emerald-800');
-        alertIcon.className = 'fa-solid fa-circle-check text-emerald-600 text-base';
-    } else if (type === 'error') {
-        alertBox.classList.add('bg-rose-50', 'border-rose-200', 'text-rose-800');
-        alertIcon.className = 'fa-solid fa-circle-exclamation text-rose-600 text-base';
-    } else {
-        alertBox.classList.add('bg-amber-50', 'border-amber-200', 'text-amber-800');
-        alertIcon.className = 'fa-solid fa-triangle-exclamation text-amber-600 text-base';
-    }
-
-    alertMsg.innerText = message;
-    alertBox.classList.remove('hidden');
-
-    setTimeout(() => {
-        hideAlert();
-    }, 4000);
+    const b = document.getElementById('alert-box');
+    const m = document.getElementById('alert-msg');
+    const i = document.getElementById('alert-icon');
+    b.className = 'mb-6 p-4 rounded-xl shadow-sm border text-sm flex justify-between ' + 
+        (type==='success' ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-800');
+    i.className = type==='success' ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-exclamation';
+    m.innerText = message; b.classList.remove('hidden'); setTimeout(hideAlert, 4000);
 }
+function hideAlert() { document.getElementById('alert-box').classList.add('hidden'); }
 
-function hideAlert() {
-    document.getElementById('alert-box').classList.add('hidden');
-}
-
-// Check stored authentication state
 function checkInitialAuth() {
-    if (currentToken) {
-        const storedRole = localStorage.getItem('user_role') || 'user';
-        const storedUsername = localStorage.getItem('username') || 'user';
-        currentUser = { username: storedUsername, role: storedRole };
-        renderAuthenticatedState();
-    } else {
-        renderLoginState();
-    }
+    if (currentToken) { currentUser = { username: localStorage.getItem('username'), role: localStorage.getItem('user_role') }; renderAuth(); }
+    else renderLoginState();
 }
 
-// Handle Login Submission
 async function handleLogin(e) {
     e.preventDefault();
-    const usernameInput = document.getElementById('username').value.trim();
-    const passwordInput = document.getElementById('password').value.trim();
-
+    const u = document.getElementById('username').value.trim();
+    const p = document.getElementById('password').value.trim();
     try {
-        const response = await fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: usernameInput, password: passwordInput })
-        });
-
-        const data = await response.json();
-
-        if (response.ok && data.token) {
-            currentToken = data.token;
-            currentUser = { username: usernameInput, role: data.role };
-            
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user_role', data.role);
-            localStorage.setItem('username', usernameInput);
-
-            showAlert(`ยินดีต้อนรับ ${usernameInput} เข้าสู่ระบบ`, 'success');
-            renderAuthenticatedState();
-        } else {
-            showAlert(data.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง', 'error');
-        }
-    } catch (err) {
-        console.error('Login Error:', err);
-        showAlert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการรัน server.js', 'error');
-    }
+        const r = await fetch('/api/login', { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username:u, password:p}) });
+        const d = await r.json();
+        if (r.ok) {
+            currentToken = d.token; currentUser = {username:u, role:d.role};
+            localStorage.setItem('token', d.token); localStorage.setItem('user_role', d.role); localStorage.setItem('username', u);
+            showAlert(`ยินดีต้อนรับ ${u}`, 'success'); renderAuth();
+        } else showAlert(d.message || 'รหัสผ่านผิด', 'error');
+    } catch { showAlert('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้', 'error'); }
 }
 
-// Logout
-function logout() {
-    localStorage.clear();
-    currentToken = null;
-    currentUser = null;
-    renderLoginState();
-    showAlert('ออกจากระบบเรียบร้อยแล้ว', 'info');
-}
+function logout() { localStorage.clear(); currentToken=null; currentUser=null; renderLoginState(); }
 
-// UI State Renderers
 function renderLoginState() {
     document.getElementById('view-login').classList.remove('hidden');
     document.getElementById('view-student').classList.add('hidden');
@@ -110,395 +52,160 @@ function renderLoginState() {
     document.getElementById('user-nav').classList.add('hidden');
 }
 
-function renderAuthenticatedState() {
+function renderAuth() {
+    renderLoginState();
     document.getElementById('view-login').classList.add('hidden');
     document.getElementById('user-nav').classList.remove('hidden');
-
-    const badge = document.getElementById('nav-user-badge');
-    badge.innerHTML = `<i class="fa-solid fa-user-circle mr-1"></i> ${currentUser.username} (${currentUser.role.toUpperCase()})`;
-
+    document.getElementById('nav-user-badge').innerHTML = `<i class="fa-solid fa-user-circle"></i> ${currentUser.username} (${currentUser.role})`;
     if (currentUser.role === 'admin') {
         document.getElementById('view-admin').classList.remove('hidden');
-        document.getElementById('view-student').classList.add('hidden');
         renderAnnouncementsAdmin();
     } else {
         document.getElementById('view-student').classList.remove('hidden');
-        document.getElementById('view-admin').classList.add('hidden');
         renderAnnouncementsStudent();
     }
-
     loadReports();
 }
 
-// Load Reports from RESTful API
-async function loadReports() {
-    if (!currentToken) return;
-
-    try {
-        const response = await fetch('/api/reports', {
-            headers: { 'Authorization': `Bearer ${currentToken}` }
-        });
-
-        if (response.status === 401 || response.status === 403) {
-            logout();
-            return;
-        }
-
-        const reports = await response.json();
-
-        if (currentUser.role === 'admin') {
-            renderAdminTable(reports);
-            updateAdminStats(reports);
-        } else {
-            renderStudentTable(reports);
-        }
-    } catch (err) {
-        console.error('Fetch Reports Error:', err);
-        showAlert('ไม่สามารถดึงข้อมูลรายการซ่อมได้', 'error');
-    }
-}
-
-// Render Student Reports Table
-function renderStudentTable(reports) {
-    const tbody = document.getElementById('student-report-tbody');
-    if (!reports || reports.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="5" class="py-8 text-center text-slate-400 text-xs">
-                    <i class="fa-solid fa-inbox text-3xl mb-2 block text-slate-300"></i>
-                    ยังไม่มีรายการแจ้งซ่อมในขณะนี้
-                </td>
-            </tr>`;
-        return;
-    }
-
-    tbody.innerHTML = reports.map(item => `
-        <tr class="hover:bg-slate-50/80 transition">
-            <td class="py-3.5 px-6 font-mono text-xs font-semibold text-slate-500">#${item.id}</td>
-            <td class="py-3.5 px-6 font-medium text-slate-800">${escapeHtml(item.title)}</td>
-            <td class="py-3.5 px-6 text-slate-500 text-xs">${escapeHtml(item.description || '-')}</td>
-            <td class="py-3.5 px-6 text-center">${getStatusBadgeHtml(item.status)}</td>
-            <td class="py-3.5 px-6 text-right">
-                ${item.status === 'รอดำเนินการ' ? `
-                    <span class="text-[11px] text-slate-400 italic">อยู่ในคิวตรวจสอบ</span>
-                ` : `
-                    <span class="text-[11px] text-emerald-600 font-medium">เจ้าหน้าที่กำลังจัดการ</span>
-                `}
-            </td>
-        </tr>
-    `).join('');
-}
-
-// Render Admin Reports Table
-function renderAdminTable(reports) {
-    const tbody = document.getElementById('admin-report-tbody');
-    if (!reports || reports.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" class="py-8 text-center text-slate-400 text-xs">
-                    <i class="fa-solid fa-inbox text-3xl mb-2 block text-slate-300"></i>
-                    ไม่มีรายการแจ้งซ่อมในระบบ
-                </td>
-            </tr>`;
-        return;
-    }
-
-    tbody.innerHTML = reports.map(item => `
-        <tr id="report-row-${item.id}" class="hover:bg-slate-50/80 transition">
-            <td class="py-3.5 px-6 font-mono text-xs font-semibold text-slate-500">#${item.id}</td>
-            <td class="py-3.5 px-6 font-medium text-slate-800 flex items-center space-x-1.5">
-                <i class="fa-solid fa-user text-slate-400 text-xs"></i>
-                <span>${escapeHtml(item.username)}</span>
-            </td>
-            <td class="py-3.5 px-6 font-medium text-slate-800">${escapeHtml(item.title)}</td>
-            <td class="py-3.5 px-6 text-slate-500 text-xs max-w-xs truncate">${escapeHtml(item.description || '-')}</td>
-            <td id="status-cell-${item.id}" class="py-3.5 px-6 text-center">${getStatusBadgeHtml(item.status)}</td>
-            <td class="py-3.5 px-6 text-center">
-                <div class="inline-flex rounded-lg shadow-sm" role="group">
-                    <button onclick="updateReportStatus(${item.id}, 'รอดำเนินการ')" 
-                        class="px-2.5 py-1 text-xs font-medium bg-white text-amber-600 border border-slate-200 rounded-l-lg hover:bg-amber-50 transition">
-                        รอดำเนินการ
-                    </button>
-                    <button onclick="updateReportStatus(${item.id}, 'กำลังแก้ไข')" 
-                        class="px-2.5 py-1 text-xs font-medium bg-white text-blue-600 border-t border-b border-slate-200 hover:bg-blue-50 transition">
-                        กำลังแก้ไข
-                    </button>
-                    <button onclick="updateReportStatus(${item.id}, 'เสร็จสิ้น')" 
-                        class="px-2.5 py-1 text-xs font-medium bg-white text-emerald-600 border border-slate-200 rounded-r-lg hover:bg-emerald-50 transition">
-                        เสร็จสิ้น
-                    </button>
-                </div>
-            </td>
-        </tr>
-    `).join('');
-}
-
-// Update Admin Dashboard Stats Counters
-function updateAdminStats(reports) {
-    const total = reports.length;
-    const pending = reports.filter(r => r.status === 'รอดำเนินการ').length;
-    const progress = reports.filter(r => r.status === 'กำลังแก้ไข').length;
-    const completed = reports.filter(r => r.status === 'เสร็จสิ้น').length;
-
-    document.getElementById('stat-total').innerText = total;
-    document.getElementById('stat-pending').innerText = pending;
-    document.getElementById('stat-progress').innerText = progress;
-    document.getElementById('stat-completed').innerText = completed;
-}
-
-// Dynamic Status Update (No Full Page Reload)
-async function updateReportStatus(id, newStatus) {
-    try {
-        const response = await fetch(`/api/reports/${id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${currentToken}`
-            },
-            body: JSON.stringify({ status: newStatus })
-        });
-
-        if (response.ok) {
-            const statusCell = document.getElementById(`status-cell-${id}`);
-            if (statusCell) {
-                statusCell.innerHTML = getStatusBadgeHtml(newStatus);
-            }
-            showAlert(`อัปเดตสถานะรายการ #${id} เป็น "${newStatus}" เรียบร้อยแล้ว`, 'success');
-            loadReports(); 
-        } else {
-            showAlert('ไม่สามารถอัปเดตสถานะได้', 'error');
-        }
-    } catch (err) {
-        console.error('Update Status Error:', err);
-        showAlert('เกิดข้อผิดพลาดในการเชื่อมต่อ', 'error');
-    }
-}
-
-// Handle Create Report Modal Form
-function toggleReportModal(show) {
-    const modal = document.getElementById('modal-report');
-    if (show) {
-        modal.classList.remove('hidden');
-    } else {
-        modal.classList.add('hidden');
-    }
-}
-
-async function handleCreateReport(e) {
-    e.preventDefault();
-    const title = document.getElementById('report-title').value.trim();
-    const desc = document.getElementById('report-desc').value.trim();
-
-    if (!title) {
-        showAlert('กรุณากรอกหัวข้อปัญหา', 'warning');
-        return;
-    }
-
-    try {
-        const response = await fetch('/api/reports', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${currentToken}`
-            },
-            body: JSON.stringify({ title, description: desc })
-        });
-
-        if (response.ok) {
-            showAlert('ส่งเรื่องแจ้งซ่อมเรียบร้อยแล้ว', 'success');
-            document.getElementById('report-title').value = '';
-            document.getElementById('report-desc').value = '';
-            toggleReportModal(false);
-            loadReports();
-        } else {
-            showAlert('เกิดข้อผิดพลาด ไม่สามารถบันทึกข้อมูลได้', 'error');
-        }
-    } catch (err) {
-        console.error('Create Report Error:', err);
-        showAlert('ไม่สามารถส่งเรื่องได้', 'error');
-    }
-}
-
-// Admin Tabs Switcher
-function switchAdminTab(tabName) {
-    const tabs = ['repairs', 'announcements', 'members'];
-    
-    tabs.forEach(tab => {
-        const content = document.getElementById(`admin-tab-${tab}`);
-        const btn = document.getElementById(`tab-btn-${tab}`);
-        
-        if (content && btn) {
-            if (tab === tabName) {
-                content.classList.remove('hidden');
-                btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 text-white shadow-sm transition';
-                if (tab === 'members') loadMembers();
-            } else {
-                content.classList.add('hidden');
-                btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-slate-200 text-slate-700 hover:bg-slate-300 transition';
-            }
-        }
-    });
-}
-
-// Announcements Rendering
 function renderAnnouncementsStudent() {
-    const container = document.getElementById('student-announcements');
-    container.innerHTML = mockAnnouncements.map(a => `
-        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
-            <div class="flex justify-between items-center mb-1">
-                <span class="font-semibold text-slate-800 text-sm">${escapeHtml(a.title)}</span>
-                <span class="text-[10px] text-slate-400">${a.date}</span>
-            </div>
-            <p class="text-xs text-slate-600">${escapeHtml(a.content)}</p>
-        </div>
-    `).join('');
+    document.getElementById('student-announcements').innerHTML = mockAnnouncements.map(a => 
+        `<div class="p-3 bg-slate-50 rounded border mb-2"><div class="font-bold text-sm">${escapeHtml(a.title)}</div><div class="text-xs text-slate-600">${escapeHtml(a.content)}</div></div>`).join('');
 }
-
 function renderAnnouncementsAdmin() {
-    const container = document.getElementById('admin-announcements-list');
-    container.innerHTML = mockAnnouncements.map(a => `
-        <div class="p-3 bg-white rounded-xl border border-slate-200 flex justify-between items-start">
-            <div>
-                <div class="flex items-center space-x-2">
-                    <span class="font-bold text-slate-800 text-sm">${escapeHtml(a.title)}</span>
-                    <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">${a.date}</span>
-                </div>
-                <p class="text-xs text-slate-600 mt-1">${escapeHtml(a.content)}</p>
-            </div>
-            <button onclick="deleteAnnouncement(${a.id})" class="text-rose-500 hover:text-rose-700 text-xs px-2 py-1">
-                <i class="fa-solid fa-trash"></i>
-            </button>
-        </div>
-    `).join('');
+    document.getElementById('admin-announcements-list').innerHTML = mockAnnouncements.map(a => 
+        `<div class="p-3 bg-white rounded border flex justify-between mb-2"><div><div class="font-bold text-sm">${escapeHtml(a.title)}</div><div class="text-xs text-slate-600">${escapeHtml(a.content)}</div></div><button onclick="deleteAnnouncement(${a.id})" class="text-rose-500 text-xs"><i class="fa-solid fa-trash"></i></button></div>`).join('');
 }
-
 function handleCreateAnnouncement(e) {
     e.preventDefault();
-    const title = document.getElementById('ann-title').value.trim();
-    const content = document.getElementById('ann-content').value.trim();
+    mockAnnouncements.unshift({ id: Date.now(), title: document.getElementById('ann-title').value, content: document.getElementById('ann-content').value, date: 'วันนี้' });
+    e.target.reset(); renderAnnouncementsAdmin(); showAlert('โพสต์ประกาศแล้ว', 'success');
+}
+function deleteAnnouncement(id) { mockAnnouncements = mockAnnouncements.filter(a => a.id !== id); renderAnnouncementsAdmin(); }
 
-    if (title && content) {
-        mockAnnouncements.unshift({
-            id: Date.now(),
-            title,
-            content,
-            date: 'วันนี้'
-        });
-        document.getElementById('ann-title').value = '';
-        document.getElementById('ann-content').value = '';
-        renderAnnouncementsAdmin();
-        showAlert('โพสต์ประกาศเรียบร้อยแล้ว', 'success');
-    }
+async function loadReports() {
+    if (!currentToken) return;
+    const r = await fetch('/api/reports', {headers:{'Authorization':`Bearer ${currentToken}`}});
+    if(r.status===401||r.status===403) return logout();
+    globalReports = await r.json();
+    if(currentUser.role==='admin') { renderAdminTable(globalReports); updateStats(globalReports); }
+    else renderStudentTable(globalReports);
 }
 
-function deleteAnnouncement(id) {
-    mockAnnouncements = mockAnnouncements.filter(a => a.id !== id);
-    renderAnnouncementsAdmin();
-    showAlert('ลบประกาศเรียบร้อยแล้ว', 'info');
+function renderStudentTable(r) {
+    const t = document.getElementById('student-report-tbody');
+    if(!r.length) return t.innerHTML=`<tr><td colspan="5" class="p-4 text-center">ไม่มีข้อมูล</td></tr>`;
+    t.innerHTML = r.map(i => `
+        <tr class="border-b"><td class="p-3 font-mono">#${i.id}</td><td class="p-3 text-center">${i.image_url?`<img src="${i.image_url}" class="h-10 mx-auto">`:''}</td>
+        <td class="p-3">${escapeHtml(i.title)}</td><td class="p-3 text-xs">${escapeHtml(i.description||'-')}</td><td class="p-3 text-center">${badge(i.status)}</td></tr>`).join('');
+}
+function renderAdminTable(r) {
+    const t = document.getElementById('admin-report-tbody');
+    if(!r.length) return t.innerHTML=`<tr><td colspan="6" class="p-4 text-center">ไม่มีข้อมูล</td></tr>`;
+    t.innerHTML = r.map(i => `
+        <tr class="border-b"><td class="p-3 font-mono">#${i.id}</td><td class="p-3 text-indigo-600 font-bold">${escapeHtml(i.username)}</td>
+        <td class="p-3 text-center">${i.image_url?`<img src="${i.image_url}" class="h-10 mx-auto">`:''}</td>
+        <td class="p-3 font-medium">${escapeHtml(i.title)}</td><td class="p-3 text-center">${badge(i.status)}</td>
+        <td class="p-3 text-center">
+            <button onclick="viewReportDetail(${i.id})" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded mr-2">ดูข้อมูล</button>
+            <button onclick="updateReportStatus(${i.id}, 'กำลังแก้ไข')" class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded">กำลังแก้ไข</button>
+            <button onclick="updateReportStatus(${i.id}, 'เสร็จสิ้น')" class="text-xs bg-emerald-50 text-emerald-600 px-2 py-1 rounded">เสร็จสิ้น</button>
+        </td></tr>`).join('');
 }
 
-// Status Badges Generator
-function getStatusBadgeHtml(status) {
-    if (status === 'รอดำเนินการ') {
-        return `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
-            <span class="w-1.5 h-1.5 mr-1.5 bg-amber-500 rounded-full animate-pulse"></span>รอดำเนินการ
-        </span>`;
-    } else if (status === 'กำลังแก้ไข') {
-        return `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-            <span class="w-1.5 h-1.5 mr-1.5 bg-blue-500 rounded-full"></span>กำลังแก้ไข
-        </span>`;
-    } else if (status === 'เสร็จสิ้น') {
-        return `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
-            <span class="w-1.5 h-1.5 mr-1.5 bg-emerald-500 rounded-full"></span>เสร็จสิ้น
-        </span>`;
-    }
-    return `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-800">${escapeHtml(status || '-')}</span>`;
+function updateStats(r) {
+    document.getElementById('stat-total').innerText = r.length;
+    document.getElementById('stat-pending').innerText = r.filter(x=>x.status==='รอดำเนินการ').length;
+    document.getElementById('stat-progress').innerText = r.filter(x=>x.status==='กำลังแก้ไข').length;
+    document.getElementById('stat-completed').innerText = r.filter(x=>x.status==='เสร็จสิ้น').length;
 }
 
-// Utility: Escape HTML
-function escapeHtml(str) {
-    if (!str) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+async function updateReportStatus(id, s) {
+    await fetch(`/api/reports/${id}`, {method:'PUT', headers:{'Content-Type':'application/json','Authorization':`Bearer ${currentToken}`}, body:JSON.stringify({status:s})});
+    loadReports();
 }
 
-// -----------------------------------------------------------------
-// Room Members Management (Admin)
-// -----------------------------------------------------------------
+function viewReportDetail(id) {
+    const r = globalReports.find(x => x.id === id); if(!r) return;
+    document.getElementById('detail-id').innerText = `#${r.id}`; document.getElementById('detail-user').innerText = r.username;
+    document.getElementById('detail-title').innerText = r.title; document.getElementById('detail-desc').innerText = r.description||'-';
+    document.getElementById('detail-status').innerHTML = badge(r.status);
+    document.getElementById('detail-image-container').innerHTML = r.image_url ? `<img src="${r.image_url}" class="max-h-48 cursor-pointer" onclick="window.open('${r.image_url}')">` : 'ไม่มีรูป';
+    document.getElementById('modal-report-detail').classList.remove('hidden');
+}
+function closeReportDetail() { document.getElementById('modal-report-detail').classList.add('hidden'); }
+function toggleReportModal(show) { document.getElementById('modal-report').classList.toggle('hidden', !show); }
+
+function readFileAsBase64(f) { return new Promise(r => { const rd = new FileReader(); rd.onload = () => r(rd.result); rd.readAsDataURL(f); }); }
+async function handleCreateReport(e) {
+    e.preventDefault(); const f = document.getElementById('report-image-file').files[0];
+    const b = { title: document.getElementById('report-title').value, description: document.getElementById('report-desc').value, image_url: f ? await readFileAsBase64(f) : '' };
+    await fetch('/api/reports', {method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${currentToken}`}, body:JSON.stringify(b)});
+    toggleReportModal(false); loadReports(); showAlert('ส่งเรื่องแล้ว'); e.target.reset();
+}
+
+// Admin Tabs
+function switchAdminTab(tName) {
+    ['repairs', 'announcements', 'members', 'accounts'].forEach(t => {
+        document.getElementById(`admin-tab-${t}`).classList.toggle('hidden', t !== tName);
+        document.getElementById(`tab-btn-${t}`).className = t === tName ? 'px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 text-white' : 'px-4 py-2 rounded-xl text-xs font-semibold bg-slate-200 text-slate-700';
+    });
+    if(tName==='members') loadMembers();
+    if(tName==='accounts') loadAccounts();
+}
+
+// Members
 async function loadMembers() {
-    if (currentUser.role !== 'admin') return;
-    try {
-        const response = await fetch('/api/members', {
-            headers: { 'Authorization': `Bearer ${currentToken}` }
-        });
-        const members = await response.json();
-        
-        const tbody = document.getElementById('admin-members-tbody');
-        if (!members || members.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-400 text-xs">ไม่มีข้อมูลผู้พักอาศัย</td></tr>`;
-            return;
-        }
+    const r = await (await fetch('/api/members', {headers:{'Authorization':`Bearer ${currentToken}`}})).json();
+    document.getElementById('admin-members-tbody').innerHTML = r.map(m => `<tr class="border-b"><td class="p-3">${m.image_url?`<img src="${m.image_url}" class="h-8 rounded-full">`:''}</td><td class="p-3 font-bold">${m.room_number}</td><td class="p-3">${m.full_name}</td><td class="p-3">${m.phone}</td><td class="p-3 text-center"><button onclick="deleteMember(${m.id})" class="text-rose-500 text-xs">ย้ายออก</button></td></tr>`).join('');
+}
+async function handleAddMember(e) {
+    e.preventDefault(); const f = document.getElementById('mem-image-file').files[0];
+    const b = {room_number:document.getElementById('mem-room').value, full_name:document.getElementById('mem-name').value, phone:document.getElementById('mem-phone').value, image_url:f?await readFileAsBase64(f):''};
+    await fetch('/api/members', {method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${currentToken}`}, body:JSON.stringify(b)});
+    loadMembers(); e.target.reset(); showAlert('เพิ่มแล้ว');
+}
+async function deleteMember(id) { if(confirm('ย้ายออก?')) { await fetch(`/api/members/${id}`, {method:'DELETE', headers:{'Authorization':`Bearer ${currentToken}`}}); loadMembers(); } }
 
-        tbody.innerHTML = members.map(m => `
-            <tr class="hover:bg-slate-50 transition">
-                <td class="py-3 px-6 font-bold text-indigo-600">${escapeHtml(m.room_number)}</td>
-                <td class="py-3 px-6 font-medium text-slate-800">${escapeHtml(m.full_name)}</td>
-                <td class="py-3 px-6 text-slate-600">${escapeHtml(m.phone)}</td>
-                <td class="py-3 px-6 text-center">
-                    <button onclick="deleteMember(${m.id})" class="text-rose-500 hover:text-rose-700 text-xs font-medium px-2 py-1 rounded bg-rose-50 hover:bg-rose-100 transition">
-                        <i class="fa-solid fa-user-minus"></i> ย้ายออก
-                    </button>
-                </td>
+// Accounts (NEW)
+async function loadAccounts() {
+    try {
+        const r = await fetch('/api/users', { headers: { 'Authorization': `Bearer ${currentToken}` } });
+        const accs = await r.json();
+        const tbody = document.getElementById('admin-accounts-tbody');
+        if (!accs.length) return tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center">ไม่มีข้อมูล</td></tr>`;
+        
+        tbody.innerHTML = accs.map(a => `
+            <tr class="border-b">
+                <td class="p-3 font-mono text-xs">#${a.id}</td>
+                <td class="p-3 font-bold text-sky-600">${escapeHtml(a.username)}</td>
+                <td class="p-3 text-center">${a.role==='admin'?'<span class="bg-rose-100 text-rose-700 px-2 py-1 rounded text-[10px] font-bold uppercase">Admin</span>':'<span class="bg-sky-100 text-sky-700 px-2 py-1 rounded text-[10px] font-bold uppercase">User</span>'}</td>
+                <td class="p-3 text-center"><button onclick="deleteAccount(${a.id})" class="text-rose-500 text-xs bg-rose-50 px-2 py-1 rounded hover:bg-rose-100"><i class="fa-solid fa-trash"></i> ลบ</button></td>
             </tr>
         `).join('');
-    } catch (err) {
-        console.error('Fetch Members Error:', err);
-    }
+    } catch(err) {}
 }
 
-async function handleAddMember(e) {
+async function handleCreateAccount(e) {
     e.preventDefault();
-    const room = document.getElementById('mem-room').value.trim();
-    const name = document.getElementById('mem-name').value.trim();
-    const phone = document.getElementById('mem-phone').value.trim();
-
-    try {
-        const response = await fetch('/api/members', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
-            body: JSON.stringify({ room_number: room, full_name: name, phone: phone })
-        });
-
-        if (response.ok) {
-            showAlert('เพิ่มรายชื่อผู้พักอาศัยเรียบร้อยแล้ว', 'success');
-            document.getElementById('mem-room').value = '';
-            document.getElementById('mem-name').value = '';
-            document.getElementById('mem-phone').value = '';
-            loadMembers();
-        } else {
-            showAlert('ไม่สามารถบันทึกข้อมูลได้', 'error');
-        }
-    } catch (err) {
-        showAlert('เกิดข้อผิดพลาดในการเชื่อมต่อ', 'error');
-    }
+    const u = document.getElementById('acc-username').value.trim();
+    const p = document.getElementById('acc-password').value.trim();
+    const r = document.getElementById('acc-role').value;
+    const res = await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` }, body: JSON.stringify({ username: u, password: p, role: r }) });
+    const data = await res.json();
+    if(res.ok) { showAlert('สร้างบัญชีแล้ว', 'success'); e.target.reset(); loadAccounts(); }
+    else showAlert(data.message, 'error');
 }
 
-async function deleteMember(id) {
-    if (!confirm('ยืนยันการลบรายชื่อผู้พักอาศัย (ย้ายออก) ใช่หรือไม่?')) return;
-    try {
-        const response = await fetch(`/api/members/${id}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${currentToken}` }
-        });
-        if (response.ok) {
-            showAlert('ลบข้อมูลเรียบร้อยแล้ว', 'success');
-            loadMembers();
-        }
-    } catch (err) {
-        showAlert('ลบข้อมูลไม่สำเร็จ', 'error');
-    }
+async function deleteAccount(id) {
+    if(!confirm('ยืนยันการลบบัญชี? (หากเคยแจ้งซ่อมจะไม่สามารถลบได้)')) return;
+    const res = await fetch(`/api/users/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${currentToken}` } });
+    if(res.ok) { showAlert('ลบบัญชีแล้ว', 'success'); loadAccounts(); }
+    else { const d = await res.json(); showAlert(d.message, 'error'); }
 }
+
+function badge(s) {
+    if(s==='รอดำเนินการ') return `<span class="bg-amber-100 text-amber-800 px-2 py-1 rounded-full text-xs">รอดำเนินการ</span>`;
+    if(s==='กำลังแก้ไข') return `<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">กำลังแก้ไข</span>`;
+    return `<span class="bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full text-xs">เสร็จสิ้น</span>`;
+}
+function escapeHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }

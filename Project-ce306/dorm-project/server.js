@@ -4,24 +4,20 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(cors());
 app.use(express.static('public')); 
 
 const SECRET_KEY = 'mysecretkey'; 
 
-// ============================================
-// ตั้งค่าการเชื่อมต่อ PostgreSQL
-// ============================================
 const pool = new Pool({
-    user: 'postgres',        // ชื่อผู้ใช้ของ pgAdmin 
+    user: 'postgres',
     host: 'localhost',
-    database: 'dorm_system', // ชื่อฐานข้อมูล
-    password: 'lift9678', // ⚠️ อย่าลืมแก้ให้เป็นรหัสผ่าน pgAdmin ของคุณ!
+    database: 'dorm_system',
+    password: 'lift9678', // อย่าลืมแก้รหัสผ่าน!
     port: 5432,
 });
 
-// Middleware ตรวจสอบ JWT Token
 const authenticateJWT = (req, res, next) => {
     const token = req.header('Authorization')?.split(' ')[1];
     if (token) {
@@ -35,20 +31,10 @@ const authenticateJWT = (req, res, next) => {
     }
 };
 
-
-// ============================================
-// API: Authentication
-// ============================================
-
-// API ล็อกอิน (Login)
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     try {
-        const result = await pool.query(
-            'SELECT * FROM users WHERE username = $1 AND password = $2',
-            [username, password]
-        );
-
+        const result = await pool.query('SELECT * FROM users WHERE username = $1 AND password = $2', [username, password]);
         if (result.rows.length > 0) {
             const user = result.rows[0];
             const token = jwt.sign({ id: user.id, role: user.role }, SECRET_KEY, { expiresIn: '1h' });
@@ -61,23 +47,15 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-
-// ============================================
-// API: ระบบแจ้งซ่อม (Repair Reports)
-// ============================================
-
-// ดึงรายการแจ้งซ่อม (Read)
 app.get('/api/reports', authenticateJWT, async (req, res) => {
     try {
         let sql = 'SELECT r.*, u.username FROM repair_reports r JOIN users u ON r.user_id = u.id';
         let values = [];
-
         if (req.user.role === 'user') {
             sql += ' WHERE r.user_id = $1';
             values = [req.user.id];
         }
-
-        sql += ' ORDER BY r.id ASC'; 
+        sql += ' ORDER BY r.id DESC'; 
         const result = await pool.query(sql, values);
         res.json(result.rows); 
     } catch (err) {
@@ -85,13 +63,12 @@ app.get('/api/reports', authenticateJWT, async (req, res) => {
     }
 });
 
-// สร้างรายการแจ้งซ่อม (Create)
 app.post('/api/reports', authenticateJWT, async (req, res) => {
-    const { title, description } = req.body;
+    const { title, description, image_url } = req.body;
     try {
         await pool.query(
-            'INSERT INTO repair_reports (user_id, title, description) VALUES ($1, $2, $3)',
-            [req.user.id, title, description]
+            'INSERT INTO repair_reports (user_id, title, description, image_url) VALUES ($1, $2, $3, $4)',
+            [req.user.id, title, description, image_url || null]
         );
         res.json({ message: 'Created successfully' });
     } catch (err) {
@@ -99,26 +76,17 @@ app.post('/api/reports', authenticateJWT, async (req, res) => {
     }
 });
 
-// เปลี่ยนสถานะรายการแจ้งซ่อม (Update - Admin)
 app.put('/api/reports/:id', authenticateJWT, async (req, res) => {
     const { status } = req.body;
     try {
-        await pool.query(
-            'UPDATE repair_reports SET status = $1 WHERE id = $2',
-            [status, req.params.id]
-        );
+        await pool.query('UPDATE repair_reports SET status = $1 WHERE id = $2', [status, req.params.id]);
         res.json({ message: 'Updated successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-
-// ============================================
-// API: จัดการผู้พักอาศัย (Room Members)
-// ============================================
-
-// 1. ดึงรายชื่อผู้พักอาศัย (Admin Only)
+// Members API
 app.get('/api/members', authenticateJWT, async (req, res) => {
     if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
     try {
@@ -129,14 +97,13 @@ app.get('/api/members', authenticateJWT, async (req, res) => {
     }
 });
 
-// 2. เพิ่มผู้พักอาศัยใหม่ (Admin Only)
 app.post('/api/members', authenticateJWT, async (req, res) => {
     if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
-    const { room_number, full_name, phone } = req.body;
+    const { room_number, full_name, phone, image_url } = req.body;
     try {
         await pool.query(
-            'INSERT INTO room_members (room_number, full_name, phone) VALUES ($1, $2, $3)',
-            [room_number, full_name, phone]
+            'INSERT INTO room_members (room_number, full_name, phone, image_url) VALUES ($1, $2, $3, $4)',
+            [room_number, full_name, phone, image_url || null]
         );
         res.json({ message: 'Member added successfully' });
     } catch (err) {
@@ -144,7 +111,6 @@ app.post('/api/members', authenticateJWT, async (req, res) => {
     }
 });
 
-// 3. ย้ายออก / ลบผู้พักอาศัย (Admin Only)
 app.delete('/api/members/:id', authenticateJWT, async (req, res) => {
     if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
     try {
@@ -155,6 +121,55 @@ app.delete('/api/members/:id', authenticateJWT, async (req, res) => {
     }
 });
 
+// ============================================
+// API: จัดการบัญชีผู้ใช้งาน (Accounts API - NEW)
+// ============================================
+app.get('/api/users', authenticateJWT, async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
+    try {
+        // ดึงเฉพาะ id, username, role (ไม่ส่งรหัสผ่านกลับไปแสดง)
+        const result = await pool.query('SELECT id, username, role FROM users ORDER BY id ASC');
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
-// เริ่มการทำงานเซิร์ฟเวอร์
+app.post('/api/users', authenticateJWT, async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
+    const { username, password, role } = req.body;
+    try {
+        // เช็คว่ามี username นี้หรือยัง
+        const check = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+        if (check.rows.length > 0) {
+            return res.status(400).json({ message: 'ชื่อผู้ใช้นี้มีในระบบแล้ว' });
+        }
+        await pool.query(
+            'INSERT INTO users (username, password, role) VALUES ($1, $2, $3)',
+            [username, password, role || 'user']
+        );
+        res.json({ message: 'Account created successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/users/:id', authenticateJWT, async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
+    try {
+        if (req.params.id == req.user.id) {
+            return res.status(400).json({ message: 'ไม่สามารถลบบัญชีของตัวเองได้' });
+        }
+        await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
+        res.json({ message: 'Account deleted successfully' });
+    } catch (err) {
+        // เช็คกรณีลบไม่ได้เพราะผู้ใช้นี้เคยแจ้งซ่อม (ติด Foreign Key)
+        if (err.code === '23503') { 
+            res.status(400).json({ message: 'ไม่สามารถลบได้ เนื่องจากบัญชีนี้มีประวัติการแจ้งซ่อมในระบบ' });
+        } else {
+            res.status(500).json({ error: err.message });
+        }
+    }
+});
+
 app.listen(3000, () => console.log('Server running on http://localhost:3000'));
