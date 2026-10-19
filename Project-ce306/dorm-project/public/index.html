@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบแจ้งซ่อมและจัดการข้อมูลหอพัก (DormCare)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Prompt', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col text-slate-800">
+
+    <!-- Header / Navbar -->
+    <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-building-user text-2xl text-amber-300"></i>
+                <span class="font-bold text-xl tracking-wide">DormCare System</span>
+            </div>
+            <div id="user-nav" class="hidden flex items-center space-x-4">
+                <span id="nav-user-badge" class="bg-indigo-800 text-indigo-100 text-xs font-semibold px-3 py-1 rounded-full border border-indigo-500">
+                    <!-- User info injected here -->
+                </span>
+                <button onclick="logout()" class="text-sm bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg transition duration-200 flex items-center space-x-1">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>ออกจากระบบ</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- Notification Alert Box -->
+        <div id="alert-box" class="hidden mb-6 p-4 rounded-xl shadow-sm border text-sm flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i id="alert-icon" class="fa-solid"></i>
+                <span id="alert-msg"></span>
+            </div>
+            <button onclick="hideAlert()" class="text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- ================= PAGE 1: LOGIN VIEW ================= -->
+        <section id="view-login" class="max-w-md mx-auto my-12 bg-white p-8 rounded-2xl shadow-xl border border-slate-100">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
+                    <i class="fa-solid fa-key"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-slate-800">เข้าสู่ระบบหอพัก</h1>
+                <p class="text-slate-500 text-sm mt-1">แจ้งซ่อม ติดตามสถานะ และข่าวสารหอพัก</p>
+            </div>
+
+            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">ชื่อผู้ใช้งาน (Username)</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                            <i class="fa-solid fa-user"></i>
+                        </span>
+                        <input type="text" id="username" required placeholder="admin หรือ student1" 
+                            class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm outline-none transition">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">รหัสผ่าน (Password)</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                            <i class="fa-solid fa-lock"></i>
+                        </span>
+                        <input type="password" id="password" required placeholder="••••••••" 
+                            class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm outline-none transition">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg shadow-md hover:shadow-lg transition duration-200 text-sm flex justify-center items-center space-x-2">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>เข้าสู่ระบบ</span>
+                </button>
+            </form>
+
+            <div class="mt-6 pt-4 border-t border-slate-100 text-xs text-slate-400 text-center">
+                บัญชีทดสอบ: <span class="font-mono text-indigo-600">student1 / 1234</span> หรือ <span class="font-mono text-indigo-600">admin / 1234</span>
+            </div>
+        </section>
+
+
+        <!-- ================= PAGE 2: STUDENT DASHBOARD ================= -->
+        <section id="view-student" class="hidden space-y-6">
+            <!-- Student Header & Stats -->
+            <div class="bg-gradient-to-r from-indigo-600 to-indigo-800 rounded-2xl p-6 text-white shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold">สวัสดี, คุณผู้พักอาศัย 👋</h2>
+                    <p class="text-indigo-200 text-sm mt-1">ยินดีต้อนรับสู่ระบบแจ้งซ่อมและบริการหอพักแบบออนไลน์</p>
+                </div>
+                <button onclick="toggleReportModal(true)" class="bg-amber-400 hover:bg-amber-500 text-slate-900 font-semibold px-5 py-2.5 rounded-xl shadow-md transition duration-200 text-sm flex items-center space-x-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>แจ้งเรื่องซ่อมใหม่</span>
+                </button>
+            </div>
+
+            <!-- Announcements & Quick Status -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Announcements Card -->
+                <div class="md:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80">
+                    <div class="flex items-center space-x-2 text-indigo-600 font-semibold text-base mb-4">
+                        <i class="fa-solid fa-bullhorn text-amber-500"></i>
+                        <h3>ประกาศจากหอพัก</h3>
+                    </div>
+                    <div id="student-announcements" class="space-y-3">
+                        <!-- Announced items rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- KPI Info Card -->
+                <div class="bg-indigo-50/60 rounded-2xl p-6 border border-indigo-100 flex flex-col justify-between">
+                    <div>
+                        <div class="text-indigo-700 font-semibold text-sm flex items-center space-x-2 mb-2">
+                            <i class="fa-solid fa-bolt text-amber-500"></i>
+                            <span>มาตรฐานการให้บริการ (KPI)</span>
+                        </div>
+                        <ul class="text-xs text-slate-600 space-y-2 mt-3">
+                            <li class="flex items-center space-x-2">
+                                <i class="fa-solid fa-circle-check text-emerald-500"></i>
+                                <span>เวลาแจ้งเรื่องเฉลี่ย &lt; 2 นาที</span>
+                            </li>
+                            <li class="flex items-center space-x-2">
+                                <i class="fa-solid fa-circle-check text-emerald-500"></i>
+                                <span>ติดตามสถานะได้ตลอด 24 ชม. (100%)</span>
+                            </li>
+                            <li class="flex items-center space-x-2">
+                                <i class="fa-solid fa-circle-check text-emerald-500"></i>
+                                <span>อัปเดตสถานะแบบเรียลไทม์ (Dynamic UI)</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-indigo-100 text-right">
+                        <span class="text-[11px] text-indigo-500 font-medium">ตอบสนองรวดเร็วเพื่อผู้พักอาศัย</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student Reports Table -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-lg text-slate-800">ประวัติและรายการแจ้งซ่อมของคุณ</h3>
+                        <p class="text-xs text-slate-500">แสดงรายการที่คุณแจ้งไว้ทั้งหมด</p>
+                    </div>
+                    <button onclick="loadReports()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center space-x-1">
+                        <i class="fa-solid fa-rotate"></i>
+                        <span>รีเฟรชข้อมูล</span>
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-600">
+                        <thead class="bg-slate-50 text-slate-500 font-medium text-xs uppercase border-b border-slate-100">
+                            <tr>
+                                <th class="py-3.5 px-6">รหัส</th>
+                                <th class="py-3.5 px-6">หัวข้อปัญหา</th>
+                                <th class="py-3.5 px-6">รายละเอียด</th>
+                                <th class="py-3.5 px-6 text-center">สถานะ</th>
+                                <th class="py-3.5 px-6 text-right">การจัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="student-report-tbody" class="divide-y divide-slate-100">
+                            <!-- Rows injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= PAGE 3: ADMIN DASHBOARD ================= -->
+        <section id="view-admin" class="hidden space-y-6">
+            <!-- Admin KPI Counters -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-500">รายการแจ้งทั้งหมด</p>
+                        <h4 id="stat-total" class="text-2xl font-bold text-slate-800 mt-1">0</h4>
+                    </div>
+                    <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-clipboard-list"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-amber-600">รอดำเนินการ</p>
+                        <h4 id="stat-pending" class="text-2xl font-bold text-amber-600 mt-1">0</h4>
+                    </div>
+                    <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-blue-600">กำลังแก้ไข</p>
+                        <h4 id="stat-progress" class="text-2xl font-bold text-blue-600 mt-1">0</h4>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-wrench"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-emerald-600">เสร็จสิ้น</p>
+                        <h4 id="stat-completed" class="text-2xl font-bold text-emerald-600 mt-1">0</h4>
+                    </div>
+                    <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Action Tabs / Views -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-wrap gap-2 justify-between items-center">
+                    <div class="flex space-x-2">
+                        <button onclick="switchAdminTab('repairs')" id="tab-btn-repairs" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 text-white shadow-sm transition">
+                            <i class="fa-solid fa-list-check mr-1.5"></i> รายการแจ้งซ่อม
+                        </button>
+                        <button onclick="switchAdminTab('announcements')" id="tab-btn-announcements" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-200 text-slate-700 hover:bg-slate-300 transition">
+                            <i class="fa-solid fa-bullhorn mr-1.5"></i> จัดการประกาศ
+                        </button>
+                        <button onclick="switchAdminTab('members')" id="tab-btn-members" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-200 text-slate-700 hover:bg-slate-300 transition">
+                            <i class="fa-solid fa-users-rectangle mr-1.5"></i> จัดการผู้พักอาศัย
+                        </button>
+                    </div>
+
+                    <button onclick="loadReports()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center space-x-1 px-3 py-1.5 bg-indigo-50 rounded-lg">
+                        <i class="fa-solid fa-rotate"></i>
+                        <span>อัปเดตข้อมูล</span>
+                    </button>
+                </div>
+
+                <!-- Tab 1: Repair Requests Table -->
+                <div id="admin-tab-repairs" class="p-0">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-slate-600">
+                            <thead class="bg-slate-50 text-slate-500 font-medium text-xs uppercase border-b border-slate-100">
+                                <tr>
+                                    <th class="py-3.5 px-6">ID</th>
+                                    <th class="py-3.5 px-6">ผู้แจ้ง</th>
+                                    <th class="py-3.5 px-6">หัวข้อปัญหา</th>
+                                    <th class="py-3.5 px-6">รายละเอียด</th>
+                                    <th class="py-3.5 px-6 text-center">สถานะปัจจุบัน</th>
+                                    <th class="py-3.5 px-6 text-center">อัปเดตสถานะ (Dynamic)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-report-tbody" class="divide-y divide-slate-100">
+                                <!-- Admin rows injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Add Announcement Form & List -->
+                <div id="admin-tab-announcements" class="hidden p-6 space-y-6">
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+                        <h4 class="font-bold text-slate-800 text-sm mb-3">สร้างประกาศใหม่</h4>
+                        <form onsubmit="handleCreateAnnouncement(event)" class="space-y-3">
+                            <input type="text" id="ann-title" required placeholder="หัวข้อประกาศ (เช่น แจ้งปิดปรับปรุงระบบน้ำ)" 
+                                class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
+                            <textarea id="ann-content" required rows="2" placeholder="เนื้อหาประกาศ..." 
+                                class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-sm transition">
+                                <i class="fa-solid fa-paper-plane mr-1"></i> โพสต์ประกาศ
+                            </button>
+                        </form>
+                    </div>
+
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-sm mb-3">รายการประกาศทั้งหมด</h4>
+                        <div id="admin-announcements-list" class="space-y-3">
+                            <!-- Announcements list -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Room Members Management -->
+                <div id="admin-tab-members" class="hidden p-6 space-y-6">
+                    <div class="bg-indigo-50 p-5 rounded-xl border border-indigo-100">
+                        <h4 class="font-bold text-indigo-800 text-sm mb-3"><i class="fa-solid fa-user-plus mr-1"></i> เพิ่มผู้พักอาศัยใหม่</h4>
+                        <form onsubmit="handleAddMember(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                            <input type="text" id="mem-room" required placeholder="เลขห้อง (เช่น 101)" 
+                                class="px-3.5 py-2 text-sm rounded-lg border border-indigo-200 focus:ring-2 focus:ring-indigo-500 outline-none">
+                            <input type="text" id="mem-name" required placeholder="ชื่อ-นามสกุล" 
+                                class="sm:col-span-2 px-3.5 py-2 text-sm rounded-lg border border-indigo-200 focus:ring-2 focus:ring-indigo-500 outline-none">
+                            <input type="text" id="mem-phone" required placeholder="เบอร์โทรศัพท์" 
+                                class="px-3.5 py-2 text-sm rounded-lg border border-indigo-200 focus:ring-2 focus:ring-indigo-500 outline-none">
+                            <button type="submit" class="sm:col-span-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2.5 rounded-lg shadow-sm transition">
+                                บันทึกข้อมูลเข้าพัก
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                        <table class="w-full text-left text-sm text-slate-600">
+                            <thead class="bg-slate-50 text-slate-500 font-medium text-xs uppercase border-b border-slate-200">
+                                <tr>
+                                    <th class="py-3 px-6">ห้องพัก</th>
+                                    <th class="py-3 px-6">ชื่อ-นามสกุล</th>
+                                    <th class="py-3 px-6">เบอร์โทรติดต่อ</th>
+                                    <th class="py-3 px-6 text-center">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-members-tbody" class="divide-y divide-slate-100 bg-white">
+                                <!-- Member rows injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+
+    <!-- ================= MODAL: CREATE REPAIR REPORT ================= -->
+    <div id="modal-report" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden transform transition-all">
+            <div class="bg-indigo-600 px-6 py-4 text-white flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-wrench text-amber-300"></i>
+                    <h3 class="font-bold text-lg">แบบฟอร์มแจ้งซ่อม / แจ้งปัญหา</h3>
+                </div>
+                <button onclick="toggleReportModal(false)" class="text-indigo-200 hover:text-white text-xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form onsubmit="handleCreateReport(event)" class="p-6 space-y-4">
+                <div class="bg-amber-50 border border-amber-200 text-amber-800 text-xs p-3 rounded-lg flex items-center space-x-2">
+                    <i class="fa-solid fa-clock text-amber-600 text-base"></i>
+                    <span>เวลาการกรอกฟอร์มแนะนำไม่เกิน 2 นาทีตามเป้าหมาย KPI</span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">หัวข้อปัญหา <span class="text-red-500">*</span></label>
+                    <input type="text" id="report-title" required placeholder="เช่น แอร์ไม่เย็น, หลอดไฟห้องน้ำขาด, น้ำซึม" 
+                        class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">รายละเอียดปัญหา</label>
+                    <textarea id="report-desc" rows="3" placeholder="ระบุตำแหน่งหรือรายละเอียดเพิ่มเติม เช่น ห้อง 304 ไฟกระพริบตลอดเวลา" 
+                        class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="toggleReportModal(false)" class="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">
+                        ยกเลิก
+                    </button>
+                    <button type="submit" class="px-5 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-md transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <span>ส่งเรื่องแจ้งซ่อม</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 text-center py-4 text-xs text-slate-400 mt-auto">
+        &copy; 2026 DormCare System. ตามข้อกำหนดโปรเจกต์ Business Understanding & RESTful Architecture
+    </footer>
+
+    <!-- Load Custom JS File -->
+    <script src="app.js"></script>
+</body>
+</html>
